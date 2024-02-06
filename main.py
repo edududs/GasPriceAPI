@@ -1,52 +1,31 @@
 from flask import Flask, jsonify
 from flask_restful import Api, Resource
-from pydantic import BaseModel
-from sqlalchemy import Column, Float, Integer, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-from models import *
 
-from gas_scrapper import GasDFPetrobraz
+from db_handler import DBManager, FuelManager
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
-
-GAS_DF = GasDFPetrobraz().gas
-
 api = Api(app)
-
-# Configurando o SQLAlchemy
-engine = create_engine("sqlite:///./gas_scrapper/data/gas_db.sqlite3")
-Session = sessionmaker(bind=engine)
-
-# Criando a tabela (se não existir)
-Base = declarative_base()
-
-
-# Configurando o Pydantic como modelo de dados
-class Gas(BaseModel):
-    preco_gas: float
-
-
-class GasolinaModel(Base):
-    __tablename__ = "gasolina"
-    id = Column(Integer, primary_key=True)
-    preco_gas = Column(Float)
-
-
-Base.metadata.create_all(engine)
 
 
 # Definindo os recursos da API
 class GetGasPrice(Resource):
-    def get(self):
-        session = Session()
-        gas = session.query(Gas).first()
-        session.close()
-        return jsonify(gas.preco_gas)
+    def __init__(self) -> None:
+        super().__init__()
+        self.db_manager = DBManager()
+        self.gas_manager = FuelManager(self.db_manager)
+
+    def get(self, uf=None):
+        if uf:
+            uf = uf.upper()
+            gas = self.gas_manager.find(uf=uf)
+            return jsonify(mensagem="Precos disponíveis", precos=gas)
+        else:
+            gas_list = self.gas_manager.find_all()
+            return jsonify(mensagem="Precos disponíveis", precos=gas_list)
 
 
-api.add_resource(GetGasPrice, "/gas")
+api.add_resource(GetGasPrice, "/gas", "/gas/<string:uf>")
 
 if __name__ == "__main__":
-    print(GAS_DF)
     app.run(debug=True)

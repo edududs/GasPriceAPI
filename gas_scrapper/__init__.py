@@ -1,3 +1,3 @@
-from .scrapper import GasDFPetrobraz
+from .scrapper import GasDFPetrobraz, GasPricePetrobras
 
-__all__ = ["GasDFPetrobraz"]
+__all__ = ["GasDFPetrobraz", "GasPricePetrobras"]

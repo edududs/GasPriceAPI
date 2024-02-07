@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from gas_scrapper import GasDFPetrobraz
+from gas_scrapper import GasPricePetrobras
 from models import FuelModel
 
 
@@ -25,7 +25,22 @@ class OperationType(Enum):
 class State(Enum):
     """Enum for states."""
 
-    DF = "DF"
+    DF = "Distrito Federal"
+    GO = "Goiás"
+    AL = "Alagoas"
+    CE = "Ceará"
+    ES = "Espírito Santo"
+    MT = "Mato Grosso"
+    MA = "Maranhão"
+    MG = "Minas Gerais"
+    PR = "Paraná"
+    PB = "Paraíba"
+    PA = "Pará"
+    PE = "Pernambuco"
+    RJ = "Rio de Janeiro"
+    SC = "Santa Catarina"
+    SP = "São Paulo"
+    RS = "Rio Grande do Sul"
 
 
 class DB:
@@ -123,11 +138,13 @@ class FuelManager:
     def find_by_state(self, state: State | str) -> Optional[Dict]:
         try:
             if isinstance(state, State):
-                state = state.value
+                state = state.name
 
-            return self.db_manager.execute_operation(
-                self.session, OperationType.READ, filter={"state": state}
+            val = self.db_manager.execute_operation(
+                self.session, OperationType.READ, filter={"uf": state}
             )
+
+            return self._to_json(val)
         finally:
             self.session.close()
 
@@ -164,7 +181,7 @@ class FuelManager:
         """Update the fuel price in the database."""
         try:
             if isinstance(state, State):
-                state = state.value
+                state = state.name
             fuel = self.db_manager.execute_operation(
                 self.session, OperationType.READ, filter={"uf": state}
             )
@@ -185,7 +202,7 @@ class FuelManager:
         """Create a new record in the database."""
         try:
             if isinstance(state, State):
-                state = state.value
+                state = state.name
             new_model = FuelModel(value=new_price, uf=state)
             self.db_manager.execute_operation(
                 self.session, OperationType.CREATE, model=new_model
@@ -197,9 +214,15 @@ class FuelManager:
 def run():
     db_manager = DBManager()
     fuel_manager = FuelManager(db_manager)
-    gas_att = GasDFPetrobraz().gas
+    gas_df = GasPricePetrobras().get_df()
+    gas_mg = GasPricePetrobras().get_mg()
+    gas_go = GasPricePetrobras().get_go()
+    gas_sp = GasPricePetrobras().get_sp()
 
-    fuel_manager.update_price(State.DF, gas_att)
+    fuel_manager.update_price(State.DF, gas_df)
+    fuel_manager.update_price(State.MG, gas_mg)
+    fuel_manager.update_price(State.GO, gas_go)
+    fuel_manager.update_price(State.SP, gas_sp)
 
 
 run()

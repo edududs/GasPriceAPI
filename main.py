@@ -19,10 +19,10 @@ class GetGasPrice(Resource):
         if uf:
             uf = uf.upper()
             gas = self.gas_manager.find(uf=uf)
-            return jsonify(mensagem="Precos disponíveis", precos=gas)
+            return jsonify(mensagem="Precos disponiveis", precos=gas)
         else:
             gas_list = self.gas_manager.find_all()
-            return jsonify(mensagem="Precos disponíveis", precos=gas_list)
+            return jsonify(mensagem="Precos disponiveis", precos=gas_list)
 
 
 api.add_resource(GetGasPrice, "/gas", "/gas/<string:uf>")

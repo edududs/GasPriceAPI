@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from gas_scrapper import GasPricePetrobras
+from gas_scrapper import GasPricePetrobras, UF
 from models import FuelModel
 
 
@@ -20,27 +20,6 @@ class OperationType(Enum):
     READ = "read"
     UPDATE = "update"
     DELETE = "delete"
-
-
-class State(Enum):
-    """Enum for states."""
-
-    DF = "Distrito Federal"
-    GO = "Goiás"
-    AL = "Alagoas"
-    CE = "Ceará"
-    ES = "Espírito Santo"
-    MT = "Mato Grosso"
-    MA = "Maranhão"
-    MG = "Minas Gerais"
-    PR = "Paraná"
-    PB = "Paraíba"
-    PA = "Pará"
-    PE = "Pernambuco"
-    RJ = "Rio de Janeiro"
-    SC = "Santa Catarina"
-    SP = "São Paulo"
-    RS = "Rio Grande do Sul"
 
 
 class DB:
@@ -135,13 +114,13 @@ class FuelManager:
             # Add other fields as needed
         }
 
-    def find_by_state(self, state: State | str) -> Optional[Dict]:
+    def find_by_state(self, uf: UF | str) -> Optional[Dict]:
         try:
-            if isinstance(state, State):
-                state = state.name
+            if isinstance(uf, UF):
+                uf = uf.name
 
             val = self.db_manager.execute_operation(
-                self.session, OperationType.READ, filter={"uf": state}
+                self.session, OperationType.READ, filter={"uf": uf}
             )
 
             return self._to_json(val)
@@ -163,7 +142,7 @@ class FuelManager:
         try:
             filter_criteria = kwargs.get("filter")
             if filter_criteria:
-                if isinstance(filter_criteria, State):
+                if isinstance(filter_criteria, UF):
                     filter_criteria = {"uf": filter_criteria.value}
                 val = self.db_manager.execute_operation(
                     self.session, OperationType.READ, filter=filter_criteria
@@ -177,13 +156,13 @@ class FuelManager:
         finally:
             self.session.close()
 
-    def update_price(self, state: State | str, new_price: float) -> None:
+    def update_price(self, uf: UF | str, new_price: float) -> None:
         """Update the fuel price in the database."""
         try:
-            if isinstance(state, State):
-                state = state.name
+            if isinstance(uf, UF):
+                uf = uf.name
             fuel = self.db_manager.execute_operation(
-                self.session, OperationType.READ, filter={"uf": state}
+                self.session, OperationType.READ, filter={"uf": uf}
             )
             if fuel:
                 fuel.value = new_price
@@ -191,19 +170,19 @@ class FuelManager:
                     self.session, OperationType.UPDATE, model=fuel
                 )
             else:
-                new_model = FuelModel(value=new_price, uf=state)
+                new_model = FuelModel(value=new_price, uf=uf)
                 self.db_manager.execute_operation(
                     self.session, OperationType.CREATE, model=new_model
                 )
         finally:
             self.session.close()
 
-    def create_price(self, state: State | str, new_price: float) -> None:
+    def create_price(self, uf: UF | str, new_price: float) -> None:
         """Create a new record in the database."""
         try:
-            if isinstance(state, State):
-                state = state.name
-            new_model = FuelModel(value=new_price, uf=state)
+            if isinstance(uf, UF):
+                uf = uf.name
+            new_model = FuelModel(value=new_price, uf=uf)
             self.db_manager.execute_operation(
                 self.session, OperationType.CREATE, model=new_model
             )
@@ -219,10 +198,10 @@ def run():
     gas_go = GasPricePetrobras().get_go()
     gas_sp = GasPricePetrobras().get_sp()
 
-    fuel_manager.update_price(State.DF, gas_df)
-    fuel_manager.update_price(State.MG, gas_mg)
-    fuel_manager.update_price(State.GO, gas_go)
-    fuel_manager.update_price(State.SP, gas_sp)
+    fuel_manager.update_price(UF.DF, gas_df)
+    fuel_manager.update_price(UF.MG, gas_mg)
+    fuel_manager.update_price(UF.GO, gas_go)
+    fuel_manager.update_price(UF.SP, gas_sp)
 
 
 run()

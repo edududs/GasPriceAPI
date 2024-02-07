@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_restful import Api, Resource
 
-from db_handler import DBManager, FuelManager
+from db_control import DBManager, FuelManager
 
 app = Flask(__name__)
 app.config["JSON_SORT_KEYS"] = False
@@ -18,7 +18,7 @@ class GetGasPrice(Resource):
     def get(self, uf=None):
         if uf:
             uf = uf.upper()
-            gas = self.gas_manager.find(uf=uf)
+            gas = self.gas_manager.find_by_state(uf)
             return jsonify(mensagem="Precos disponiveis", precos=gas)
         else:
             gas_list = self.gas_manager.find_all()

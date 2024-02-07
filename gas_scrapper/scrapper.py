@@ -4,6 +4,7 @@ from enum import Enum
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from requests import Response
 
 
 class UF(Enum):
@@ -70,33 +71,40 @@ class GasDFPetrobraz:
 
 
 class GasPricePetrobras:
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.base_url = (
             "https://precos.petrobras.com.br/web/precos-dos-combustiveis/w/gasolina/"
         )
 
-    def get_df(self):
+    def get_df(self) -> float:
         response = self._get_response(UF.DF)
         gas_value = self._get_gas_value(response)
         return gas_value
 
-    def get_go(self):
+    def get_go(self) -> float:
         response = self._get_response(UF.GO)
         gas_value = self._get_gas_value(response)
         return gas_value
 
-    def get_mg(self):
+    def get_mg(self) -> float:
         response = self._get_response(UF.MG)
         gas_value = self._get_gas_value(response)
         return gas_value
 
-    def get_sp(self):
+    def get_sp(self) -> float:
         response = self._get_response(UF.SP)
         gas_value = self._get_gas_value(response)
         return gas_value
 
-    def _get_gas_value(self, response):
+    def get_all(self) -> dict:
+        df = self.get_df()
+        go = self.get_go()
+        mg = self.get_mg()
+        sp = self.get_sp()
+        return {"DF": df, "GO": go, "MG": mg, "SP": sp}
+
+    def _get_gas_value(self, response) -> float:
         soup = BeautifulSoup(response.content, "lxml")
         if soup.select_one(".h4.real-value#telafinal-precofinal") is None:
             raise ValueError("Precos indisponíveis")
@@ -108,14 +116,14 @@ class GasPricePetrobras:
         )
         return gas_value
 
-    def _get_response(self, uf: UF):
+    def _get_response(self, uf: UF) -> Response:
         base_url = self._make_url(uf)
         response = requests.get(base_url, timeout=100)
         if response.status_code != 200:
             raise ValueError(f"Falha na requisição com código {response.status_code}")
         return response
 
-    def _make_url(self, uf: UF):
+    def _make_url(self, uf: UF) -> str:
         url = self.base_url + uf.name.lower()
         return url
 

@@ -1,0 +1,12 @@
+.git
+.venv
+.django_tailwind_cli
+data
+staticfiles
+.env
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.hypothesis
+.coverage
+src/gasprice/web/static/css/tailwind.css

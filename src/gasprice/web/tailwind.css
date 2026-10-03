@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@source "./templates";
+@source "./static/js";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Colours the map reads at runtime: SVG fill attributes cannot use var(), so map.js resolves these. */
+:root {
+  --map-empty: #e7e5e4;
+  --map-stroke: #ffffff;
+  --map-selected: #1c1917;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --map-empty: #292524;
+    --map-stroke: #0c0a09;
+    --map-selected: #fafaf9;
+  }
+}
+
+/* Unlayered and scoped to #map so it wins over leaflet.css, which loads after this file. */
+#map.leaflet-container {
+  background: transparent;
+  font: inherit;
+}
+#map .leaflet-tooltip {
+  @apply rounded-md border-0 bg-stone-900 px-2 py-1 text-xs text-white shadow-lg;
+}
+#map .leaflet-tooltip::before {
+  display: none;
+}

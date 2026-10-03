@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Quanto custa a viagem · GasPrice{% endblock %}
+{% block scripts %}<script src="{% static 'js/trip.js' %}" defer></script>{% endblock %}
+{% block content %}
+<main class="mx-auto max-w-6xl px-4 py-8">
+  <section class="mb-6">
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Quanto custa a viagem</h1>
+    <p class="mt-1 text-stone-600 dark:text-stone-400">Marque a origem e o destino no mapa, escolha o carro e veja o gasto com combustível pelo preço médio de cada estado no caminho.</p>
+  </section>
+
+  <div class="grid gap-6 lg:grid-cols-5 lg:items-start">
+    <div class="lg:col-span-3">
+      <section class="rounded-2xl border border-stone-200 bg-white p-2 shadow-sm dark:border-stone-800 dark:bg-stone-900" aria-label="Mapa da viagem">
+        <div id="trip-map" class="aspect-square w-full rounded-xl sm:aspect-[4/3]"
+             data-tiles="{{ tile_url }}" data-attribution="{{ tile_attribution }}"
+             data-states="{% static 'geo/br-states.json' %}" data-max-points="{{ max_points }}"></div>
+        <p class="px-2 pt-2 text-xs text-stone-500 dark:text-stone-400">Clique para marcar a origem, depois o destino; cliques seguintes viram paradas. Arraste um marcador para ajustar.</p>
+      </section>
+    </div>
+
+    <form class="space-y-5 lg:col-span-2 lg:col-start-4 lg:row-span-2 lg:row-start-1" hx-post="{% url 'trip-estimate' %}" hx-target="#trip-result" hx-indicator="#trip-submit">
+      {% csrf_token %}
+      <input type="hidden" name="points" id="trip-points-input">
+
+      <fieldset class="rounded-2xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
+        <legend class="px-1 text-sm font-semibold">Trajeto</legend>
+        <ol id="trip-points" class="space-y-1.5 text-sm">
+          <li class="text-stone-500 dark:text-stone-400" data-empty>Nenhum ponto marcado ainda.</li>
+        </ol>
+        <div class="mt-3 flex gap-2">
+          <input type="search" name="place_q" placeholder="Buscar endereço ou cidade" autocomplete="off"
+                 class="min-w-0 flex-1 rounded-lg border border-stone-300 bg-transparent px-3 py-2 text-sm dark:border-stone-700"
+                 hx-get="{% url 'trip-places' %}" hx-trigger="keydown[key=='Enter']" hx-target="#place-results" hx-sync="this:replace"
+                 onkeydown="if (event.key === 'Enter') event.preventDefault()">
+          <button type="button" class="rounded-lg border border-stone-300 px-3 text-sm hover:border-stone-500 dark:border-stone-700"
+                  hx-get="{% url 'trip-places' %}" hx-include="[name=place_q]" hx-target="#place-results">Buscar</button>
+        </div>
+        <div id="place-results" class="mt-2"></div>
+      </fieldset>
+
+      <fieldset class="rounded-2xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
+        <legend class="px-1 text-sm font-semibold">Veículo</legend>
+        <div class="grid grid-cols-2 gap-1 rounded-lg bg-stone-100 p-1 text-sm dark:bg-stone-800">
+          <label class="cursor-pointer rounded-md px-3 py-1.5 text-center has-[:checked]:bg-white has-[:checked]:font-medium has-[:checked]:shadow-sm dark:has-[:checked]:bg-stone-950">
+            <input type="radio" name="mode" value="catalog" class="sr-only" {% if not catalog_empty %}checked{% endif %}> Do catálogo
+          </label>
+          <label class="cursor-pointer rounded-md px-3 py-1.5 text-center has-[:checked]:bg-white has-[:checked]:font-medium has-[:checked]:shadow-sm dark:has-[:checked]:bg-stone-950">
+            <input type="radio" name="mode" value="manual" class="sr-only" {% if catalog_empty %}checked{% endif %}> Informar km/L
+          </label>
+        </div>
+
+        <div data-mode="catalog" class="mt-3 {% if catalog_empty %}hidden{% endif %}">
+          <input type="hidden" name="vehicle_id" id="vehicle-id">
+          <div id="vehicle-selected" class="mb-2 hidden rounded-lg bg-amber-50 px-3 py-2 text-sm dark:bg-amber-500/10"></div>
+          <input type="search" name="vehicle_q" placeholder="Marca, modelo ou versão" autocomplete="off"
+                 class="w-full rounded-lg border border-stone-300 bg-transparent px-3 py-2 text-sm dark:border-stone-700"
+                 hx-get="{% url 'trip-vehicles' %}" hx-trigger="input changed delay:300ms, focus once" hx-target="#vehicle-results">
+          <div id="vehicle-results" class="mt-2"></div>
+        </div>
+
+        <div data-mode="manual" class="mt-3 space-y-2 {% if not catalog_empty %}hidden{% endif %}">
+          <p class="text-xs text-stone-500 dark:text-stone-400">Preencha os combustíveis que o carro usa. Com gasolina e etanol, comparamos os dois.</p>
+          {% for fuel in manual_fuels %}
+            <label class="flex items-center justify-between gap-3 text-sm">
+              <span>{{ fuel.label }}</span>
+              <span class="flex items-center gap-1.5">
+                <input type="text" inputmode="decimal" name="kml_{{ fuel.value }}" placeholder="ex.: 12,5"
+                       class="w-24 rounded-lg border border-stone-300 bg-transparent px-2 py-1.5 text-right tabular-nums dark:border-stone-700">
+                <span class="text-xs text-stone-500">km/L</span>
+              </span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset class="rounded-2xl border border-stone-200 bg-white p-4 dark:border-stone-800 dark:bg-stone-900">
+        <legend class="px-1 text-sm font-semibold">Como você vai rodar</legend>
+        <div class="grid grid-cols-3 gap-1 rounded-lg bg-stone-100 p-1 text-sm dark:bg-stone-800">
+          {% for profile in profiles %}
+            <label class="cursor-pointer rounded-md px-2 py-1.5 text-center has-[:checked]:bg-white has-[:checked]:font-medium has-[:checked]:shadow-sm dark:has-[:checked]:bg-stone-950">
+              <input type="radio" name="profile" value="{{ profile.value }}" class="sr-only" {% if profile.value == "mixed" %}checked{% endif %}> {{ profile.label }}
+            </label>
+          {% endfor %}
+        </div>
+        <p class="mt-2 text-xs text-stone-500 dark:text-stone-400">Com veículo do catálogo, define qual consumo do INMETRO usar. “Misto” é 55% cidade e 45% estrada.</p>
+        <label class="mt-3 flex items-center gap-2 text-sm">
+          <input type="checkbox" name="round_trip" class="size-4 accent-amber-500"> Ida e volta
+        </label>
+      </fieldset>
+
+      <button id="trip-submit" type="submit"
+              class="group w-full rounded-xl bg-stone-900 px-4 py-3 font-medium text-white hover:bg-stone-700 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200">
+        <span class="group-[.htmx-request]:hidden">Calcular custo</span>
+        <span class="hidden group-[.htmx-request]:inline">Calculando…</span>
+      </button>
+      {% if approximate_router %}
+        <p class="text-xs text-amber-700 dark:text-amber-400">Roteamento offline: distâncias estimadas em linha reta × 1,25.</p>
+      {% endif %}
+    </form>
+
+    <section id="trip-result" aria-live="polite" class="lg:col-span-3"></section>
+  </div>
+</main>
+{% endblock %}

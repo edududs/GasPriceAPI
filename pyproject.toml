@@ -1,0 +1,103 @@
+[project]
+name = "gasprice"
+version = "0.1.0"
+description = "Preço dos combustíveis no Brasil por estado: coleta da ANP, mapa e API."
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [{ name = "Eduardo Lima", email = "dudulj15@gmail.com" }]
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "dj-database-url>=3.1.2",
+    "django>=6.1.1",
+    "django-htmx>=1.29.0",
+    "django-ninja>=1.7.1",
+    "django-tailwind-cli>=4.8.1",
+    "gunicorn>=26.2.0",
+    "httpx>=0.28.1",
+    "openpyxl>=3.1.5",
+    "pydantic>=2.13.5",
+    "whitenoise>=6.12.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.12"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "django-types>=0.24.0",
+    "hypothesis>=6.168.3",
+    "poethepoet>=0.48.0",
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.10",
+    "types-openpyxl>=3.1.5.20260827",
+]
+
+[tool.uv.build-backend]
+module-name = "gasprice"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+extend-exclude = ["src/gasprice/*/adapters/migrations"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",      # docstrings only where they add information
+    "CPY",    # no license header policy
+    "COM812", # the formatter owns trailing commas
+    "ISC001", # the formatter owns implicit concatenation
+    "TC001",  # pydantic and ninja resolve annotations at runtime: imports stay where they are
+    "TC002",
+    "TC003",
+    "RUF001", # pt-BR text has its own punctuation (–, —, −)
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "INP001", "SLF001"]
+"tests/workbooks.py" = ["DTZ001"] # spreadsheet cells carry no time zone, like the ANP's
+"src/gasprice/*/adapters/{api,views}.py" = ["ARG001"] # Django and ninja hand `request` to every view
+"manage.py" = ["INP001"]
+
+[tool.pyright]
+include = ["src", "tests", "manage.py"]
+exclude = ["**/migrations/**", ".venv"]
+typeCheckingMode = "strict"
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "--cov", "--cov-report=term-missing:skip-covered"]
+DJANGO_SETTINGS_MODULE = "settings_test"
+
+[tool.coverage.run]
+source = ["gasprice"]
+omit = ["*/migrations/*", "*/wsgi.py"]
+
+[tool.coverage.report]
+fail_under = 90
+skip_covered = true
+
+[tool.poe.tasks]
+format = "ruff format"
+lint = "ruff check --fix"
+typecheck = "pyright"
+test = "pytest -q"
+migrations-check = { cmd = "python manage.py makemigrations --check --dry-run", env = { DJANGO_DEBUG.default = "1" } }
+fix = ["format", "lint", "typecheck", "migrations-check", "test"]
+# CI: the same gate, reporting instead of rewriting files
+format-check = "ruff format --check"
+lint-check = "ruff check"
+check = ["format-check", "lint-check", "typecheck", "migrations-check", "test"]
+css = { cmd = "python manage.py tailwind build", env = { DJANGO_DEBUG.default = "1" } }
+dev = { cmd = "python manage.py tailwind runserver", env = { DJANGO_DEBUG.default = "1" } }

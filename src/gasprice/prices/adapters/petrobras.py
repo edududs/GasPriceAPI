@@ -12,7 +12,7 @@ import httpx
 from bs4 import BeautifulSoup
 from pydantic import ValidationError
 
-from gasprice.prices.adapters.http import get_bytes
+from gasprice.prices.adapters.download import download
 from gasprice.prices.application import Harvest, SourceUnavailableError
 from gasprice.prices.domain import DomainError, Fuel, PriceReport, Source, State, parse_decimal
 
@@ -43,7 +43,7 @@ class PetrobrasSource:
         today = self._today()
         for state in self._states:
             try:
-                page = get_bytes(self._client, f"{self._base_url}{state.value.lower()}", attempts=2)
+                page = download(self._client, f"{self._base_url}{state.value.lower()}", attempts=2)
                 reports.append(
                     PriceReport(
                         source=Source.PETROBRAS,

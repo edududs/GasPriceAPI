@@ -1,0 +1,14 @@
+{% if error %}
+  <p class="text-sm text-amber-700 dark:text-amber-400">{{ error }}</p>
+{% elif places %}
+  <ul class="divide-y divide-stone-100 rounded-lg border border-stone-200 text-sm dark:divide-stone-800 dark:border-stone-800">
+    {% for place in places %}
+      <li>
+        <button type="button" data-place-lat="{{ place.coordinate.lat|stringformat:'f' }}" data-place-lon="{{ place.coordinate.lon|stringformat:'f' }}" data-place-name="{{ place.name }}"
+                class="w-full px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-stone-800">{{ place.name }}</button>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif query %}
+  <p class="text-sm text-stone-500 dark:text-stone-400">Nenhum lugar encontrado para “{{ query }}”.</p>
+{% endif %}

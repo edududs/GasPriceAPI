@@ -42,7 +42,7 @@ module-name = "gasprice"
 [tool.ruff]
 line-length = 110
 target-version = "py313"
-extend-exclude = ["src/gasprice/prices/adapters/migrations"]
+extend-exclude = ["src/gasprice/*/adapters/migrations"]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -62,7 +62,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "PLR2004", "INP001", "SLF001"]
 "tests/workbooks.py" = ["DTZ001"] # spreadsheet cells carry no time zone, like the ANP's
-"src/gasprice/prices/adapters/{api,views}.py" = ["ARG001"] # Django and ninja hand `request` to every view
+"src/gasprice/*/adapters/{api,views}.py" = ["ARG001"] # Django and ninja hand `request` to every view
 "manage.py" = ["INP001"]
 
 [tool.pyright]

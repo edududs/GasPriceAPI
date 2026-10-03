@@ -4,10 +4,9 @@ from decimal import Decimal
 import httpx
 import pytest
 
-from gasprice.prices.adapters.http import build_client, get_bytes
 from gasprice.prices.adapters.petrobras import BASE_URL, PetrobrasSource, parse_price
-from gasprice.prices.application import SourceUnavailableError
 from gasprice.prices.domain import DomainError, Fuel, Source, State
+from gasprice.shared.http import FetchError, build_client, get_bytes
 
 
 def _sequence(*responses: httpx.Response | Exception) -> tuple[httpx.Client, list[str]]:
@@ -36,14 +35,14 @@ def test_get_bytes_retries_server_errors_and_network_failures() -> None:
 
 def test_get_bytes_gives_up_at_once_on_a_client_error() -> None:
     client, calls = _sequence(httpx.Response(404))
-    with pytest.raises(SourceUnavailableError, match="HTTP 404"):
+    with pytest.raises(FetchError, match="HTTP 404"):
         get_bytes(client, "https://x.test/", sleep=lambda _: None)
     assert len(calls) == 1
 
 
 def test_get_bytes_reports_the_last_reason() -> None:
     client, _ = _sequence(httpx.Response(500), httpx.Response(502))
-    with pytest.raises(SourceUnavailableError, match="HTTP 502"):
+    with pytest.raises(FetchError, match="HTTP 502"):
         get_bytes(client, "https://x.test/", attempts=2, sleep=lambda _: None)
 
 

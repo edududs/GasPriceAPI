@@ -1,18 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
-{% block body %}
-<header class="border-b border-stone-200 bg-white/80 backdrop-blur dark:border-stone-800 dark:bg-stone-900/80">
-  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-    <a href="{% url 'index' %}" class="flex items-center gap-2 font-semibold tracking-tight">
-      <span class="grid size-8 place-items-center rounded-lg bg-amber-500 text-sm font-bold text-stone-950">R$</span>
-      GasPrice
-    </a>
-    <nav class="flex items-center gap-4 text-sm text-stone-600 dark:text-stone-400">
-      <a class="hover:text-stone-900 dark:hover:text-white" href="/api/v1/docs">API</a>
-      <a class="hover:text-stone-900 dark:hover:text-white" href="https://github.com/edududs/GasPriceAPI">GitHub</a>
-    </nav>
-  </div>
-</header>
+{% block scripts %}<script src="{% static 'js/map.js' %}" defer></script>{% endblock %}
+{% block content %}
 
 <main class="mx-auto max-w-6xl px-4 py-8">
   <section class="mb-6">

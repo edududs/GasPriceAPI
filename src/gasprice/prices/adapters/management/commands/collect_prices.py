@@ -8,10 +8,10 @@ from django.utils import timezone
 from gasprice.prices.adapters.anp import AnpSource
 from gasprice.prices.adapters.composition import clock, repository
 from gasprice.prices.adapters.demo import DemoSource
-from gasprice.prices.adapters.http import build_client
 from gasprice.prices.adapters.petrobras import PetrobrasSource
 from gasprice.prices.application import CollectPrices, PriceSource
 from gasprice.prices.domain import Source
+from gasprice.shared.http import build_client
 
 
 class Command(BaseCommand):

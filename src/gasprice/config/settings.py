@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django_htmx",
     "django_tailwind_cli",
     "gasprice.prices.adapters.apps.PricesConfig",
+    "gasprice.trips.adapters.apps.TripsConfig",
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,19 @@ GASPRICE_ANP_PAGE_URL = os.environ.get(
     "levantamento-do-precos-de-combustiveis-ultimas-semanas-pesquisadas",
 )
 GASPRICE_HTTP_TIMEOUT = float(os.environ.get("GASPRICE_HTTP_TIMEOUT", "30"))
+
+# Trips. `osrm` asks GASPRICE_OSRM_URL for road routes (the public demo server by default; point it at a
+# self-hosted OSRM for real use). `straight` needs no network: great-circle distance times 1.25.
+GASPRICE_ROUTER = os.environ.get("GASPRICE_ROUTER", "osrm")
+GASPRICE_OSRM_URL = os.environ.get("GASPRICE_OSRM_URL", "https://router.project-osrm.org")
+GASPRICE_NOMINATIM_URL = os.environ.get("GASPRICE_NOMINATIM_URL", "https://nominatim.openstreetmap.org")
+GASPRICE_TILE_URL = os.environ.get("GASPRICE_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+GASPRICE_TILE_ATTRIBUTION = os.environ.get(
+    "GASPRICE_TILE_ATTRIBUTION",
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+)
+
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 GASPRICE_MAX_AGE_DAYS = int(os.environ.get("GASPRICE_MAX_AGE_DAYS", "15"))
 
 LOGGING = {

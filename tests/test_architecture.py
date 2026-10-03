@@ -1,4 +1,5 @@
-"""The core may import only the stdlib, pydantic and the layers beneath it."""
+"""The core of each context may import only the stdlib, pydantic, the layers beneath it, and the
+domain of the contexts it is declared to build on (D-11)."""
 
 import ast
 import sys
@@ -9,13 +10,19 @@ import pytest
 
 ROOT = "gasprice"
 PACKAGE = Path(__file__).resolve().parents[1] / "src" / ROOT
-CONTEXTS = ("prices",)
+CONTEXTS = ("prices", "trips")
 LAYERS = {"domain": ("domain",), "application": ("domain", "application")}
+UPSTREAM = {"trips": ("prices",)}
+"""trips speaks of states and fuels in the prices context's terms; never the other way round."""
 
 
 def violations(source: str, module: str, context: str, layer: str) -> list[str]:
     package = module.rsplit(".", 1)[0]
-    permitted = {"pydantic"} | {f"{ROOT}.{context}.{beneath}" for beneath in LAYERS[layer]}
+    permitted = (
+        {"pydantic"}
+        | {f"{ROOT}.{context}.{beneath}" for beneath in LAYERS[layer]}
+        | {f"{ROOT}.{upstream}.domain" for upstream in UPSTREAM.get(context, ())}
+    )
     imported: list[str] = []
     for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
@@ -50,3 +57,11 @@ def test_guard_detects_deliberate_violations() -> None:
         "from ..adapters import models", f"{ROOT}.prices.application.x", "prices", "application"
     )
     assert not violations("from decimal import Decimal", f"{ROOT}.prices.domain.x", "prices", "domain")
+    assert not violations(
+        f"from {ROOT}.prices.domain import State", f"{ROOT}.trips.domain.x", "trips", "domain"
+    )
+    assert violations(f"from {ROOT}.trips.domain import Route", f"{ROOT}.prices.domain.x", "prices", "domain")
+    assert violations(f"from {ROOT}.prices.application import x", f"{ROOT}.trips.domain.x", "trips", "domain")
+    assert violations(
+        f"from {ROOT}.shared.http import get_bytes", f"{ROOT}.trips.domain.x", "trips", "domain"
+    )

@@ -19,6 +19,7 @@ from gasprice.prices.domain import (
     State,
     UnknownStateError,
 )
+from gasprice.trips.adapters.api import router as trips_router
 
 
 class PriceOut(Schema):
@@ -101,6 +102,9 @@ api = NinjaAPI(
     description="Preço médio de revenda dos combustíveis por estado, do levantamento semanal da ANP.",
     urls_namespace="api",
 )
+
+
+api.add_router("/", trips_router)
 
 
 @api.exception_handler(DomainError)

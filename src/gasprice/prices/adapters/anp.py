@@ -20,7 +20,7 @@ import httpx
 from openpyxl import load_workbook
 from pydantic import ValidationError
 
-from gasprice.prices.adapters.http import get_bytes
+from gasprice.prices.adapters.download import download
 from gasprice.prices.application import Harvest, SourceUnavailableError
 from gasprice.prices.domain import (
     DomainError,
@@ -75,10 +75,10 @@ class AnpSource:
 
     def _read_workbook(self) -> bytes:
         if self._workbook is None:
-            page = get_bytes(self._client, self._page_url).decode("utf-8", errors="replace")
-            return get_bytes(self._client, find_latest_workbook(page, self._page_url))
+            page = download(self._client, self._page_url).decode("utf-8", errors="replace")
+            return download(self._client, find_latest_workbook(page, self._page_url))
         if self._workbook.startswith(("http://", "https://")):
-            return get_bytes(self._client, self._workbook)
+            return download(self._client, self._workbook)
         path = Path(self._workbook)
         try:
             return path.read_bytes()

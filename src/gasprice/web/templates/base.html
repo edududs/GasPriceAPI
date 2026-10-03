@@ -10,9 +10,27 @@
   <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
   <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
   <script src="{% static 'vendor/leaflet/leaflet.js' %}" defer></script>
-  <script src="{% static 'js/map.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
 </head>
 <body class="min-h-screen bg-stone-50 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-100">
-  {% block body %}{% endblock %}
+<header class="border-b border-stone-200 bg-white/80 backdrop-blur dark:border-stone-800 dark:bg-stone-900/80">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+    <a href="{% url 'index' %}" class="flex items-center gap-2 font-semibold tracking-tight">
+      <span class="grid size-8 place-items-center rounded-lg bg-amber-500 text-sm font-bold text-stone-950">R$</span>
+      <span class="hidden sm:inline">GasPrice</span>
+    </a>
+    {% with current=request.resolver_match.url_name %}
+    <nav class="flex items-center gap-1 text-sm">
+      <a href="{% url 'index' %}" {% if current == 'index' %}aria-current="page"{% endif %}
+         class="rounded-md px-2.5 py-1.5 {% if current == 'index' %}bg-stone-100 font-medium dark:bg-stone-800{% else %}text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white{% endif %}">Preços</a>
+      <a href="{% url 'trip' %}" {% if current == 'trip' %}aria-current="page"{% endif %}
+         class="rounded-md px-2.5 py-1.5 {% if current == 'trip' %}bg-stone-100 font-medium dark:bg-stone-800{% else %}text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white{% endif %}">Calcular viagem</a>
+      <a href="/api/v1/docs" class="rounded-md px-2.5 py-1.5 text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white">API</a>
+      <a href="https://github.com/edududs/GasPriceAPI" class="hidden rounded-md px-2.5 py-1.5 text-stone-600 hover:text-stone-900 sm:inline dark:text-stone-400 dark:hover:text-white">GitHub</a>
+    </nav>
+    {% endwith %}
+  </div>
+</header>
+  {% block content %}{% endblock %}
 </body>
 </html>

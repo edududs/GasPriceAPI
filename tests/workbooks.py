@@ -69,3 +69,63 @@ def workbook(rows: Sequence[Row], *, title_rows: int = 9, with_municipalities: b
     buffer = BytesIO()
     book.save(buffer)
     return buffer.getvalue()
+
+
+PBEV_GROUPS = ("", "", "", "", "", "QUILOMETRAGEM POR LITRO", None, None, None)
+PBEV_FUELS = ("", "", "", "", "", "Etanol", None, "Gasolina ou Diesel", None)
+PBEV_HEADER = (
+    "Categoria",
+    "Marca",
+    "Modelo",
+    "Versão",
+    "Combustível",
+    "Cidade",
+    "Estrada",
+    "Cidade",
+    "Estrada",
+)
+
+
+def pbev_workbook(rows: Sequence[Row], *, title_rows: int = 3) -> bytes:
+    """Like the INMETRO table: the km/L titles span three header rows, with merged group cells.
+
+    Merged cells read back as the value in their first cell and None in the rest, which is what
+    the `None` entries reproduce.
+    """
+    book = Workbook()
+    sheet = book.active
+    assert sheet is not None
+    for index in range(title_rows):
+        sheet.append(["PROGRAMA BRASILEIRO DE ETIQUETAGEM VEICULAR" if index == 0 else None])
+    sheet.append([*PBEV_HEADER[:5], *PBEV_GROUPS[5:]])
+    sheet.append([None] * 5 + list(PBEV_FUELS[5:]))
+    sheet.append([None] * 5 + list(PBEV_HEADER[5:]))
+    for item in rows:
+        sheet.append(list(item))
+    buffer = BytesIO()
+    book.save(buffer)
+    return buffer.getvalue()
+
+
+def plain_vehicle_sheet(rows: Sequence[Row]) -> bytes:
+    """A hand-made sheet with a one-row header, which the same parser accepts."""
+    book = Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.append(
+        [
+            "MARCA",
+            "MODELO",
+            "VERSÃO",
+            "ANO",
+            "GASOLINA CIDADE",
+            "GASOLINA ESTRADA",
+            "ETANOL CIDADE",
+            "ETANOL ESTRADA",
+        ]
+    )
+    for item in rows:
+        sheet.append(list(item))
+    buffer = BytesIO()
+    book.save(buffer)
+    return buffer.getvalue()

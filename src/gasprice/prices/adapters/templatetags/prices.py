@@ -21,3 +21,11 @@ def brl(value: Decimal | None, fuel: Fuel | None = None) -> str:
 def signed(value: Decimal) -> str:
     text = number_format(abs(value), 1, use_l10n=True)
     return f"+{text}%" if value > 0 else (f"−{text}%" if value < 0 else "0%")
+
+
+@register.filter
+def money(value: Decimal | None) -> str:
+    """Totals in reais: always two places."""
+    if value is None:
+        return "—"
+    return f"R$ {number_format(value, 2, use_l10n=True, force_grouping=True)}"

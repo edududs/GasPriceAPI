@@ -1,0 +1,13 @@
+<nav id="fuel-tabs" {% if oob %}hx-swap-oob="true"{% endif %} aria-label="Combustível"
+     class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+  {% for option in fuels %}
+    <a href="?fuel={{ option.value }}"
+       hx-get="{% url 'board' option.value %}" hx-target="#board" hx-push-url="?fuel={{ option.value }}"
+       {% if option == fuel %}aria-current="page"{% endif %}
+       class="shrink-0 rounded-full border px-3 py-1.5 text-sm transition
+              {% if option == fuel %}border-stone-900 bg-stone-900 text-white dark:border-white dark:bg-white dark:text-stone-900
+              {% else %}border-stone-300 bg-white text-stone-700 hover:border-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300{% endif %}">
+      {{ option.label }}
+    </a>
+  {% endfor %}
+</nav>

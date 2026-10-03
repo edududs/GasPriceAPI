@@ -1,0 +1,60 @@
+{% load prices %}
+{% with state=overview.state selected=overview.selected %}
+<article class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+  <header class="flex items-start justify-between gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">{{ state.region.value }}</p>
+      <h2 class="text-xl font-semibold text-balance">{{ state.label }} <span class="text-stone-400">{{ state.value }}</span></h2>
+    </div>
+    {% if selected %}
+      <div class="text-right">
+        <p class="text-xs text-stone-500 dark:text-stone-400">{{ fuel.label }}</p>
+        <p class="whitespace-nowrap text-2xl font-semibold tabular-nums">{{ selected.average|brl:fuel }}</p>
+        {% if selected.minimum and selected.maximum %}
+          <p class="text-xs tabular-nums text-stone-500 dark:text-stone-400">de {{ selected.minimum|brl:fuel }} a {{ selected.maximum|brl:fuel }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </header>
+
+  {% if chart %}
+    <figure class="mt-5">
+      <figcaption class="mb-2 flex items-baseline justify-between text-xs text-stone-500 dark:text-stone-400">
+        <span>{{ fuel.label }}, {{ chart.first.period_end|date:"d/m/Y" }} a {{ chart.last.period_end|date:"d/m/Y" }}</span>
+        <span class="font-medium tabular-nums {% if chart.change > 0 %}text-orange-700 dark:text-orange-400{% elif chart.change < 0 %}text-emerald-700 dark:text-emerald-400{% endif %}">{{ chart.change|signed }}</span>
+      </figcaption>
+      <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" class="h-28 w-full overflow-visible" preserveAspectRatio="none" role="img"
+           aria-label="Histórico de {{ fuel.label|lower }} em {{ state.label }}: mínimo {{ chart.lowest.report.average|brl:fuel }}, máximo {{ chart.highest.report.average|brl:fuel }}">
+        <path d="{{ chart.area }}" class="fill-amber-500/15"></path>
+        <path d="{{ chart.line }}" class="fill-none stroke-amber-600 dark:stroke-amber-400" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
+      </svg>
+      <div class="mt-1 flex justify-between text-xs tabular-nums text-stone-500 dark:text-stone-400">
+        <span>mín. {{ chart.lowest.report.average|brl:fuel }} ({{ chart.lowest.report.period_end|date:"d/m" }})</span>
+        <span>máx. {{ chart.highest.report.average|brl:fuel }} ({{ chart.highest.report.period_end|date:"d/m" }})</span>
+      </div>
+    </figure>
+  {% elif not selected %}
+    <p class="mt-4 text-sm text-stone-500 dark:text-stone-400">Sem preços de {{ fuel.label|lower }} para {{ state.label }}.</p>
+  {% endif %}
+
+  {% if overview.current %}
+    <table class="mt-5 w-full text-sm">
+      <caption class="sr-only">Preço atual de cada combustível em {{ state.label }}</caption>
+      <tbody class="divide-y divide-stone-100 dark:divide-stone-800">
+        {% for report in overview.current %}
+          <tr {% if report.fuel == fuel %}class="font-semibold"{% endif %}>
+            <th scope="row" class="py-1.5 text-left font-normal">{{ report.fuel.label }}</th>
+            <td class="py-1.5 text-right tabular-nums">{{ report.average|brl:report.fuel }}</td>
+            <td class="py-1.5 pl-3 text-right text-xs text-stone-400">{{ report.fuel.unit }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% with first=overview.current.0 %}
+      <p class="mt-3 text-xs text-stone-500 dark:text-stone-400">
+        Semana de {{ first.period_start|date:"d/m" }} a {{ first.period_end|date:"d/m/Y" }} · {{ first.source.label }}
+      </p>
+    {% endwith %}
+  {% endif %}
+</article>
+{% endwith %}

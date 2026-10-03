@@ -1,0 +1,31 @@
+# Site + coletor sobre o mesmo volume SQLite. Para Postgres, defina DATABASE_URL no .env.
+#   cp .env.example .env   # e preencha DJANGO_SECRET_KEY, DJANGO_DEBUG=0
+#   docker compose up -d --build
+name: gasprice
+
+x-app: &app
+  build: .
+  image: gasprice:latest
+  env_file:
+    - path: .env
+      required: false
+  volumes:
+    - data:/app/data
+  restart: unless-stopped
+
+services:
+  web:
+    <<: *app
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # A ANP publica uma vez por semana e a coleta é idempotente: rodar duas vezes por dia só garante
+  # que uma falha de rede não custe a semana. Falhas ficam registradas e aparecem em /api/v1/health.
+  collector:
+    <<: *app
+    depends_on: [web]
+    command: >
+      sh -c "while true; do python manage.py collect_prices || true; sleep 43200; done"
+
+volumes:
+  data:

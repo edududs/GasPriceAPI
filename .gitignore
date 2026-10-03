@@ -1,4 +1,17 @@
-env
-*cache*
-*gas_db*
-*foo*
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+
+# Local data and secrets
+data/
+.env
+
+# Generated: Tailwind output, its binary, collected static
+src/gasprice/web/static/css/tailwind.css
+.django_tailwind_cli/
+staticfiles/

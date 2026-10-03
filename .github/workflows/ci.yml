@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      # Same gate as `uv run poe fix`, but it reports instead of rewriting files.
+      - run: uv run poe check
+      # The templates must still compile to CSS and every static reference must resolve.
+      - name: Build CSS and collect static
+        run: |
+          uv run poe css
+          DJANGO_SECRET_KEY=ci uv run python manage.py collectstatic --noinput
